@@ -5,6 +5,11 @@ var product = require('./product/productController');
 var inventory = require('./inventory/inventoryController');
 var order = require('./order/orderController');
 var checkout = require('./checkout/checkoutController');
+var auth_service = require('./auth/AuthController');
+
+app.use('/admin', auth_service,(req,res,next)=>{
+    res.status(200).send("Success");
+});
 
 app.use('/admin/products', product,(req,res,next)=>{
     res.status(200).send("Success");
@@ -21,4 +26,5 @@ app.use('/admin/order', order,(req,res,next)=>{
 app.use('/admin/cart', checkout,(req,res,next)=>{
     res.status(200).send("Success");
 });
+
 module.exports = app;

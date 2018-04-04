@@ -60,11 +60,11 @@ module.exports.FetchById = function(id,cb){
 }
 
 //modify products
-module.exports.ModifyProducts = function(title,price,description,sku,qty,quantity,id,cb) {
+module.exports.ModifyProducts = function(name,price,description,sku,id,cb) {
     const con = new pg.Client(connectionParams);
     con.connect();
     query4 = "UPDATE product SET name=$1,price=$2,description=$3,sku=$4 where pdid=$5";
-    con.query(query4,[title,price,description,sku,id],(err,res)=>{
+    con.query(query4,[name,price,description,sku,id],(err,resp)=>{
         if(err){
             if(cb) cb(err,null);
             con.end();

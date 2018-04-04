@@ -1,60 +1,39 @@
 var express = require('express');
 var router=express();
 var bodyParser=require('body-parser');
+var VerifyToken = require('./VerifyToken');
 
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
 var db=require('../db/checkout_db');
 
-router.post('/add_to_cart',(req,res)=>
+router.post('/add_to_cart',VerifyToken,(req,res)=>
 {
-    var status=req.body.status;
+    //var status=req.body.status;
     var jsondata=req.body;
-        db.add(status,jsondata,(err,resp)=>{
-         
-                if(err)
-                {
-                    return res.status(500).send("oops");
-        
-                }
-                if(!resp)
-                {
-                    return res.status(404).send("not found");
-                }
-                res.status(200).send("successfully inserted");
-        })
-
-    
-})
-
-router.get('/view_cart', (err,res)=>{
-db.view_cart((err1,respnew)=>{
-    if(err1)
-    {
-        return res.status(500).send("oops");
-
-    }
-    if(!respnew)
-    {
-        return res.status(404).send("not found");
-    }
-    if(respnew)
-    {
-        if(respnew.length==0)
-            {
-                return res.status(200).send("No Entries Found"); 
-            }
-    else
-    {
-    return res.status(200).send(respnew);
-    }
-    }
-        
+    db.add(jsondata,(err,resp)=>{
+        if(err) return res.status(500).send("oops");
+        if(!resp) return res.status(404).send("not found");
+        res.status(200).send({id:resp.chkid,status:"successfully inserted"});
     })
 })
 
+router.get('/view_cart',VerifyToken, (err,res)=>{
+    db.view_cart((err1,respnew)=>{
+        if(err1) return res.status(500).send("oops");
+        if(!respnew) return res.status(404).send("not found");
+        if(respnew){
+            if(respnew.length==0){
+                return res.status(200).send("No Entries Found"); 
+            }
+            else{
+                return res.status(200).send(respnew);
+            }
+        }    
+    })
+})
 
-router.get("/view_cart/:id",(req,res)=>{
+router.get("/view_cart/:id",VerifyToken,(req,res)=>{
    
     let id=req.params.id;
     let status=req.body.status;
@@ -88,45 +67,23 @@ router.get("/view_cart/:id",(req,res)=>{
         })
 })
 
-router.put("/update_cart/:id",(req,res)=>{
-    let id=req.params.id;
-     update_value_array=req.body;
-    db.update_line_items(id,update_value_array,(err,respnew)=>{
-        if(err)
-        {
-            return res.status(500).send("oops");
-    
-        }
-        if(!respnew)
-        {
-            return res.status(404).send("not found");
-        }
-         if(respnew)
-         {
-            return res.status(200).send("Successfully Updated");
-         } 
-          
-        })
+router.put("/update_cart/:id",VerifyToken,(req,res)=>{
+let id=req.params.id;
+update_value_array=req.body;
+db.update_line_items(id,update_value_array,(err,respnew)=>{
+    if(err) return res.status(500).send("oops");
+    if(!respnew) return res.status(404).send("not found");
+    res.status(200).send({status:"Successfully Updated"});  
+    })
 })
 
-router.delete("/delete_cart/:id",(req,res)=>{
-    let id=req.params.id;
-    db.delete_checkout(id,(err,respnew)=>{
-        if(err)
-        {
-            return res.status(500).send("oops");
-    
-        }
-        if(!respnew)
-        {
-            return res.status(404).send("not found");
-        }
-         if(respnew)
-        {
-            return res.status(200).send("Successfully deleted");
-        } 
-          
-        })
+router.delete("/delete_cart/:id",VerifyToken,(req,res)=>{
+let id=req.params.id;
+db.delete_checkout(id,(err,respnew)=>{
+    if(err) return res.status(500).send("oops");
+    if(!respnew) return res.status(404).send("not found");
+        res.status(200).send({status:"Successfully deleted"});
+    })
 })
 
 module.exports = router;

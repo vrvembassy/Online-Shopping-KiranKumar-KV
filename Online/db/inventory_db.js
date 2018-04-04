@@ -49,7 +49,7 @@ module.exports.fetchStockDetails = function(cb) {
 module.exports.getItemById = function(sid,cb) {
     const conn = new pg.Client(connectionParams)
     conn.connect();
-    let query1 = "select name,stock,sku from inventory i,product p where stid=$1 AND  p.pdid=i.productid";
+    let query1 = "select productid,name,stock,sku from inventory i,product p where stid=$1 AND  p.pdid=i.productid";
     conn.query(query1,[sid],(err,resp) => {
         if(err) {
             if(cb) {

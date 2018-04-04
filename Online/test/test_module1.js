@@ -7,10 +7,10 @@ chai.use(require('chai-http'));
  
 const app = require('../server.js'); // Our app
  
-describe('Get Request', function() {  
+describe('Get Request(products)', function() {  
 this.timeout(5000); // How long to wait for a response (ms)
         // GET - List all products
-    it('should return all products', function() {
+    it('should return all products (products)', function() {
         return chai.request(app)
         .get('/admin/products/viewproducts')
         .then(function(res) {
@@ -20,24 +20,25 @@ this.timeout(5000); // How long to wait for a response (ms)
         });
     });
 
-// GET - Invalid path
-    it('should return Not Found', function() {
+
+    // GET - Invalid path
+    it('should return Not Found (products)', function() {
         return chai.request(app)
-        .get('/INVALID_PATH')
+        .get('/admin/product/viewproducts')
         .then(function(res) {
             throw new Error('Invalid path!');
         })
         .catch(function(err) {
-            expect(err).to.have.status(404);
+            expect(err).to.be.an('error');
         });
     });
 });
 
 
-describe('Post request', function(){
+describe('Post request(products)', function(){
     this.timeout(5000); // How long to wait for a response (ms)
     // POST - Add new products
-    it('should add new products', function() {
+    it('should add new products (products)', function() {
         return chai.request(app)
         .post('/admin/products/addProduct')
         .set("Content-Type", "application/json")
@@ -51,11 +52,11 @@ describe('Post request', function(){
             expect(res).to.have.status(200);
             expect(res).to.be.json;
             expect(res.body).to.be.an('object');
-            expect(res.body).to.be.an('object').that.have.key({id:"someid",status:'success'});
+            expect(res.body).to.be.an('object').that.have.key({productid:"someid",status:'success'});
         });
     });
     // POST - Bad Request
-    it('should return Bad Request', function() {
+    it('should return Bad Request (products)', function() {
         return chai.request(app)
         .post('/admin/products')
         .type('form')
@@ -66,15 +67,16 @@ describe('Post request', function(){
             throw new Error('Invalid content type!');
         })
         .catch(function(err) {
-            expect(err).to.have.status(500);
+            expect(err).to.be.an('error');
         });
     });
 });
 
+
 //delete product
-describe('Delete Request',function(){
+describe('Delete Request (products)',function(){
     this.timeout(5000); // How long to wait for a response (ms)
-    it('it should delete the item',function(){
+    it('it should delete the item (products)',function(){
         return chai.request(app)
         .post('/admin/products/addProduct')
         .set("Content-Type", "application/json")
@@ -85,22 +87,20 @@ describe('Delete Request',function(){
             "sku":'TSHIRTPARED'
         })   
         .then(function(res){
-            console.log(res.body);
             chai.request(app)
-            .delete('/admin/products/delete'+res.body.id)
+            .delete('/admin/products/delete/'+res.body.productid)
             .then(function(res){
-                console.log(res.body);
                 expect(res).to.be.have.status(200);
                 expect(res.body).to.be.an('object').that.have.key({status:"Deleted successfully"});
             });
         });
     });
 });
-/*
+
 //modify product
-describe('Put Request',function(){
+describe('Put Request (products)',function(){
     this.timeout(5000); // How long to wait for a response (ms)
-    it('should modify',function(){
+    it('should modify (products)',function(){
         return  chai.request(app)
         .post('/admin/products/addProduct')
         .set("Content-Type", "application/json")
@@ -112,10 +112,10 @@ describe('Put Request',function(){
         })
         .then(function(res){
             chai.request(app)
-            .get('/admin/products/modify/'+res.body.id)
-            .then(function(res){ 
+            .get('/admin/products/viewproducts/'+res.body.productid)
+            .then(function(res1){ 
                 chai.request(app)
-                .put('/admin/products/modify/'+res.body.id)
+                .put('/admin/products/modify/'+res1.body.pdid)
                 .set("Content-Type", "application/json")
                 .send({
                     "name" : "Puma",
@@ -130,4 +130,4 @@ describe('Put Request',function(){
             })      
         })
     })
-});*/
+});

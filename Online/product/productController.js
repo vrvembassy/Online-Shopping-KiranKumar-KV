@@ -1,7 +1,11 @@
 var express = require('express');
 var router = express.Router();
 var bodyParser = require('body-parser');
-
+var NATS = require('nats');
+var VerifyToken = require('./VerifyToken');
+//var servers = ['http://localhost:8222'];
+//var nats = NATS.connect({'servers': servers});
+var nats = NATS.connect();
 router.use(bodyParser.urlencoded({ extended: false }));
 router.use(bodyParser.json());
 
@@ -9,7 +13,7 @@ router.use(bodyParser.json());
 var db = require('../db/product_db');
 
 //add the products
-router.post('/addProduct',(req,res)=>{
+router.post('/addProduct',VerifyToken,(req,res)=>{
     let name = req.body.name;
     let price = req.body.price; 
     let desc = req.body.description;
@@ -18,11 +22,17 @@ router.post('/addProduct',(req,res)=>{
         if(err) return res.status(500).send('Error on the server');
         if(!resp) return res.status(404).send('No Items added');
         res.status(200).send({productid:resp,status:"success"});
+        const msg = 'Product Added Succesfully';
+        nats.publish('events', msg,function() {
+            console.log('Published [events] : "' + msg + '"');
+            //process.exit(); 
+        });
     });
+
 });
 
 //get all the products
-router.get('/viewproducts',(req,res)=>{
+router.get('/viewproducts',VerifyToken,(req,res)=>{
     db.FetchProducts((err,resp)=>{
         if(err) return res.status(500).send('Error on the server.');
         if(!resp) return res.status(404).send('No Item to display');
@@ -31,39 +41,30 @@ router.get('/viewproducts',(req,res)=>{
 })
 
 //get products by using id
-router.get('/viewproducts/:id',(req,res)=>{
+router.get('/viewproducts/:id',VerifyToken,(req,res)=>{
     let id = req.params.id;
     db.FetchById(req.params.id,(err,resp)=>{
         if(err) return res.status(500).send('Error on the server');
         if(!resp) return res.status(404).send('No Items for perticular id');
-        res.status(200).send({title:resp.title,price:resp.price,description:resp.description,sku:resp.sku});
+        res.status(200).send({pdid:resp.pdid,name:resp.name,price:resp.price,description:resp.description,sku:resp.sku});
     });
 });
 
-//Modify product
-router.get('/modify/:id',(req,res)=>{
-    let id = req.params.id;
-    db.FetchById(id,(err,resp)=>{
-        if(err) return res.status(500).send('Error on the server');
-        if(!resp) return res.status(404).send('No Items for perticular id');
-        res.status(200).send({id:resp.id,title:resp.title,price:resp.price,description:resp.description,sku:resp.sku});
-        router.put('/modify/'+resp.id,(req1,res1)=>{
-            let title = req1.body.title;
-            let price = req1.body.price;
-            let description = req1.body.description; 
-            let sku = req1.body.sku;
-            db.ModifyProducts(title,price,description,sku,resp.id,(err1,resp1)=>{
-                if(err1) return res1.status(500).send('Error on the server');
-                if(!resp1) return res1.status(404).send('Oops... Update failed!');
-                res1.status(200).send({status:"success"});    
-            })
-        })
+//modify product
+router.put('/modify/:id',VerifyToken,(req,res)=>{
+    let name = req.body.name;
+    let price = req.body.price;
+    let description = req.body.description; 
+    let sku = req.body.sku;
+    db.ModifyProducts(name,price,description,sku,req.params.id,(err1,resp1)=>{
+        if(err1) return res.status(500).send('Error on the server');
+        if(!resp1) return res.status(404).send('Oops... Update failed!');
+        res.status(200).send({status:"success"});    
     })
 })
 
-
 //delete product 
-router.delete('/delete/:id',(req,res)=>{
+router.delete('/delete/:id',VerifyToken,(req,res)=>{
     let id = req.params.id;
     db.deleteProduct(id,(err,resp)=>{
         if(err) return res.status(500).send('Error on the server');
